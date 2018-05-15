@@ -1,0 +1,70 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{csquotes}
+
+\begin{document}
+
+\section{Background}
+Yesterday, Vlad and I discussed the problem of how much information is leaked
+by different queries.
+%
+I raised the issue that some queries seem to leak large amounts of information
+which gives an attacker a cross section of information about the entire
+database structure.
+%
+Specifically I posed this email:
+
+\begin{displayquote}
+I've been spending some time thinking about information leakage in Blind Seer.
+
+And more specifically, I'm having trouble understanding how allowing `and'
+queries doesn’t immediately cause huge issues. Last time we discussed wanting
+to discover whether or not a person makes a certain amount of money, say. It
+seems to me that as soon as someone is able to ask one question about the
+amount of money individuals in the database make and another about the names of
+individuals in the database they certainly seemed to have gained a lot of
+information with regard to their malicious question.
+
+Or another way to put this is it seems like every query you're allowed to issue
+allows you to characterize the labels the nodes in the database tree very
+rapidly (basically each query tells you something about \emph{every} node in the
+tree).
+
+I guess just overall I'm trying to understand what sorts of guarantees (if any)
+Blind Seer gives. Is there any literature I can refer to in order to get a
+grasp on this stuff? For example, you mentioned that we know that pure `or'
+queries don’t reveal information beyond the output of the query. While I
+understand the argument you gave the last time we met, I was hoping there might
+be something written down that might give more insight into how `and' leaks
+information.
+\end{displayquote}
+%
+
+
+\section{Notes}
+
+Fixed database
+And set of queries
+Leakage property
+Can the set of queries reveal property
+Some database where this property is leaked?
+
+How to take distributional reasoning and encoding it as SMT somehow?
+
+Model Counting
+How many satisfying assignments to each formula?
+Formalize the policy
+  What does the attacker assume
+  Finite execution of a query
+  Know concrete queries and concrete database
+  How is attacker knowledge represented
+
+Find way to represent the question
+  Alice calls Bob
+  Did Alice call Charlie?
+
+Allowed Leakage "does it fall within allowed leakage?"
+Access Control Policy "which queries are allowed?"
+
+\end{document}

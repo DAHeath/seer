@@ -1,0 +1,33 @@
+\documentclass{article}
+
+\begin{document}
+
+Vlad and I discussed two directions for potential research:
+\textbf{(1)} branch elimination and \textbf{(2)} information leakage
+understanding.
+
+Both tasks seem highly linked to information flow.
+%
+For the first problem, consider a program which is partially evaluated
+on some input. The task is to decide if it is possible to
+delete a branch of the program without revealing addtional information
+about the output that is not already implied by the output, or by some
+leakage factor.
+%
+In the second problem, the task is to construct an oracle that can
+answer yes/no questions about program leakage. The user provides an
+input program and a property and the oracle indicates whether or not
+the program leaks the property in question.
+
+It seems like it is possible to encode both problems as CHC problems.
+The second problem \emph{seems} more straightforward.
+%
+Potentially, it reduces directly to information flow: Given two
+executions of the program, is it possible to observe the property in
+question. TODO, how exactly does this work?
+
+The second question seems harder but also possible. Given two
+executions of the program -- one where the branch is taken and one
+where it is not -- is the branch condition revealed?
+
+\end{document}

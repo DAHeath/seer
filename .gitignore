@@ -1,0 +1,7 @@
+BlindSeer/.stack-work/
+BlindSeer.cabal
+*~
+*.swp
+*.pdf
+*.aux
+*.log

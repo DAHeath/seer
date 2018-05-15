@@ -1,0 +1,97 @@
+\documentclass{article}
+
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{tikz}
+
+\begin{document}
+Blind Seer is a database technology that supports multi-party
+computation (MPC).
+%
+The database is a flat structure where each database record is
+accessed by traversing a tree.
+%
+Each vertex in the tree contains the union of all labels of records
+accessible from that vertex.
+%
+In order to access particular records according to an input query, the
+client and the server follow an MPC protocol. By doing so, the server
+prevents information about the database from propogating to the client
+(and presumably the client prevents information about their query from
+propogating to the server).
+
+The algorithm for addressing a query traverses the search tree one
+vertex at a time, deciding if each vertex \emph{satisfies} the query
+(meaning there is information in the label of the vertex that matches
+the query).
+%
+Let's assume that the two parties attempt to determine if some
+arbitrary vertex satisfies the query.
+%
+Then, the client provides the query and the server provides the label for
+the vertex. Together, they determine satisfaction via MPC.
+%
+If the vertex satisfies the query, then the two parties recurse on the
+children of the given vertex.
+%
+Otherwise, the two parties terminate searching the current branch of
+the tree.
+%
+This continues until the tree has been fully traversed, and any
+records which were reached are propogated to the
+client.
+
+While the individual vertex computations are secured via MPC, the
+overall traversal is not.
+%
+Therefore, some information is leaked.
+%
+By carefully constructing queries, it is possible to learn new
+information about the content of the database which may be
+undesirable.
+%
+
+One interesting problem space attempts to identify how information
+leaks as a result of the structure of the tree traversals.
+%
+As a starting point, we know that a purely disjunctive query does not
+leak any information beyond the query result. We know this because
+there are no `partial branches' in the tree traversal.
+%
+Specifically, if any arbitrary vertex satisfies the query, then there
+must be at least one path from that vertex to a matching record.
+%
+However, conjunctive queries do not have the same behavior. It is
+possible that a given vertex succeeds in satisfying the query, yet
+both of its children fail.
+%
+When this happens, some information has been leaked: The attacker
+knows that there is a vertex that satisfies their query that does not
+lead to a specific matching record.
+%
+However, qualifying what information has leaked is a difficult task.
+
+We will employ Programming Language techniques to address
+problems in this space.
+%
+The user \emph{may} be asked to provide some of the following
+elements:
+
+\begin{itemize}
+\item The fully populated database.
+\item A policy which describes what types of queries are allowed.
+\item A query which asks if it is possible for certain information to
+leak.
+\end{itemize}
+
+The oracle we will construct will use this information to construct
+either \textbf{(1)} a proof that described information leakage is
+impossible or \textbf{(2)} a query(ies) that leads to the information
+leakage we wanted to prevent.
+%
+One possible direction for addressing such problems starts by
+considering only single queries in isolation: Specifically, how
+qualifying what information is leaked by a conjunctive query.
+%
+Then, this work could be extended to consider multiple queries.
+\end{document}
