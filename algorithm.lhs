@@ -63,7 +63,7 @@ We declare a function `formulate` which converts a record to a formula.
 >   pure (Leaf (M.union r r'))
 > -- The query failed, so attach `not q` to all labels here and below
 > augment' q (Leaf Nothing) vdb =
->   pure (propogateFact (lnot q) vdb)
+>   pure (propagateFact (lnot q) vdb)
 > -- The query succeeded at this branch
 > augment' q (Branch () l1 r1) (Branch lbl' l2 r2) = do
 >   (l', Disjunctive lphi) <- listen (augment' q l1 l2)
@@ -71,13 +71,13 @@ We declare a function `formulate` which converts a record to a formula.
 >   pure (Branch ((lbl' `land` q) `lor` lphi `lor` rphi) l' r')
 > augment' _ _ _ = impossible
 
-`augment` makes use of this helper function `propogateFact`, which just attaches
+`augment` makes use of this helper function `propagateFact`, which just attaches
 a formula to all labels in the given subtree.
 
-> propogateFact :: Formula -> VDB -> VDB
-> propogateFact _ (Leaf r) = Leaf r
-> propogateFact phi (Branch phi' l r) =
->   Branch (phi `land` phi') (propogateFact phi l) (propogateFact phi r)
+> propagateFact :: Formula -> VDB -> VDB
+> propagateFact _ (Leaf r) = Leaf r
+> propagateFact phi (Branch phi' l r) =
+>   Branch (phi `land` phi') (propagateFact phi l) (propagateFact phi r)
 
 With this in place, the user need only start with an initial guess for the
 virtual database. The initial guess is based off the shape of the actual
