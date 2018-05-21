@@ -6,10 +6,14 @@ include an identifier for each node.
 
 > module Seer where
 
-> data Set a
-> data Map k v
+> import           Control.Monad.Writer
+> import           Data.Map
+> import qualified Data.Map as M
+> import           Data.Set
+> import qualified Data.Set as S
+
 > data Formula
-> data Key
+> data Key = Key deriving (Eq, Ord)
 > data Value
 > type Record = Map Key Value
 > data ID
@@ -33,35 +37,57 @@ either labels (early termination) or records.
 
 The client is free to view the output of `seer'. By inspecting the output, the
 client learns new facts about the labels. They can use this to augment their
-own virtual database:
+own virtual database.
+
+There are two sources of new information.
+Firstly, for each label of the database we know that the query holds or does not
+hold. We append this information.
+The second piece of information is based on any records which are reached. The
+records may contain information which can inform other queries.
+
+We declare a function `formulate` which converts a record to a formula.
+
+> formulate :: Record -> Formula
+> formulate = undefined
 
 > type VLabel = Formula
-> type VDB = Tree VLabel (Either Formula Record)
+> type VDB = Tree VLabel Record
 
 > augment :: Query -> Tree () (Maybe Record) -> VDB -> VDB
-> -- The query failed here
-> augment q (Leaf Nothing) (Leaf (Left phi)) = Leaf (Left (phi `land` lnot q))
-> -- The query did not get to the record
-> augment q (Leaf Nothing) (Leaf (Right r)) = Leaf (Right r)
+> augment q traversal vdb = fst $ runWriter (augment' q traversal vdb)
+
+> augment' :: Query -> Tree () (Maybe Record) -> VDB -> Writer Disjunctive VDB
 > -- The query provided a new record for the virtual database
-> augment _ (Leaf (Just r)) (Leaf (Right r')) = Leaf (Right (union r r'))
-> augment _ (Leaf (Just r)) _ = Leaf (Right r)
-> -- The query failed at this branch
-> augment q (Leaf Nothing) (Branch lbl left right) =
->   Branch (lbl `land` lnot q) left right
+> augment' _ (Leaf (Just r)) (Leaf r') = do
+>   tell (Disjunctive $ formulate r)
+>   pure (Leaf (M.union r r'))
+> -- The query failed, so attach `not q` to all labels here and below
+> augment' q (Leaf Nothing) vdb =
+>   pure (propogateFact (lnot q) vdb)
 > -- The query succeeded at this branch
-> augment q (Branch () left right) (Branch lbl' left' right') =
->   Branch (lbl' `land` q) (augment q left left') (augment q right right')
-> -- The query revealed a new branch which is not in the virtual database yet
-> augment q (Branch () left right) (Leaf (Left phi)) =
->   Branch (phi `land` q) (augment q left (Leaf (Left ltrue)))
->                         (augment q right (Leaf (Left ltrue)))
+> augment' q (Branch () l1 r1) (Branch lbl' l2 r2) = do
+>   (l', Disjunctive lphi) <- listen (augment' q l1 l2)
+>   (r', Disjunctive rphi) <- listen (augment' q r1 r2)
+>   pure (Branch ((lbl' `land` q) `lor` lphi `lor` rphi) l' r')
+> augment' _ _ _ = impossible
+
+`augment` makes use of this helper function `propogateFact`, which just attaches
+a formula to all labels in the given subtree.
+
+> propogateFact :: Formula -> VDB -> VDB
+> propogateFact _ (Leaf r) = Leaf r
+> propogateFact phi (Branch phi' l r) =
+>   Branch (phi `land` phi') (propogateFact phi l) (propogateFact phi r)
 
 With this in place, the user need only start with an initial guess for the
-virtual database:
+virtual database. The initial guess is based off the shape of the actual
+database (which we assume to be known).
 
-> emptyVDB :: VDB
-> emptyVDB = Leaf (Left ltrue)
+> emptyVDB :: Tree a b -> VDB
+> -- Our starting assumption for the leaves is they are empty records.
+> emptyVDB (Leaf _) = Leaf M.empty
+> -- Our starting assumption for the branches is that we know nothing (true).
+> emptyVDB (Branch _ l r) = Branch ltrue (emptyVDB l) (emptyVDB r)
 
 Then, they can call augment with each new traversal they find. Finally, they
 can run a virtual version of the seer algorithm to try to answer queries.
@@ -86,22 +112,23 @@ original seer algorithm whereas the final two cases are the new possibilities.
 >   = Result Record
 >   | NotHolds
 >   | Unknown
->   | Holds
 
 The tree produced by running this virtual version of the seer algorithm
 
 > vseer :: VDB -> Query -> Tree () VResult
-> vseer (Leaf (Right r)) _ = Leaf (Result r)
-> vseer (Leaf (Left phi)) q
->   | phi `lentails` q = Leaf Holds
->   | phi `lentails` lnot q = Leaf NotHolds
->   | otherwise = Leaf Unknown
+> vseer (Leaf r) _ = Leaf (Result r)
 > vseer (Branch phi left right) q
 >   | phi `lentails` q = Branch () (vseer left q) (vseer right q)
 >   | phi `lentails` lnot q = Leaf NotHolds
 >   | otherwise = Leaf Unknown
 
-Some helper functions follow:
+Some helper definitions follow:
+
+> newtype Disjunctive = Disjunctive { getDisjunctive :: Formula }
+
+> instance Monoid Disjunctive where
+>   mempty = Disjunctive lfalse
+>   mappend (Disjunctive x) (Disjunctive y) = Disjunctive $ lor x y
 
 > -- Logical entailment: Is the formula where the first argument implies the
 > -- second valid?
@@ -112,6 +139,10 @@ Some helper functions follow:
 > land :: Formula -> Formula -> Formula
 > land = undefined
 
+> -- Logical disjunction
+> lor :: Formula -> Formula -> Formula
+> lor = undefined
+
 > -- Logical negation
 > lnot :: Formula -> Formula
 > lnot = undefined
@@ -120,5 +151,9 @@ Some helper functions follow:
 > ltrue :: Formula
 > ltrue = undefined
 
-> union :: Record -> Record -> Record
-> union = undefined
+> -- The formula `true'
+> lfalse :: Formula
+> lfalse = undefined
+
+> impossible :: a
+> impossible = error "this case should be impossible"
