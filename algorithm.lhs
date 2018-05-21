@@ -7,10 +7,11 @@ include an identifier for each node.
 > module Seer where
 
 > data Set a
+> data Map k v
 > data Formula
 > data Key
 > data Value
-> data Record
+> type Record = Map Key Value
 > data ID
 > type Label = Set (Key, Value)
 > type Query = Formula -- perhaps something more specific?
@@ -43,6 +44,7 @@ own virtual database:
 > -- The query did not get to the record
 > augment q (Leaf Nothing) (Leaf (Right r)) = Leaf (Right r)
 > -- The query provided a new record for the virtual database
+> augment _ (Leaf (Just r)) (Leaf (Right r')) = Leaf (Right (union r r'))
 > augment _ (Leaf (Just r)) _ = Leaf (Right r)
 > -- The query failed at this branch
 > augment q (Leaf Nothing) (Branch lbl left right) =
@@ -117,3 +119,6 @@ Some helper functions follow:
 > -- The formula `true'
 > ltrue :: Formula
 > ltrue = undefined
+
+> union :: Record -> Record -> Record
+> union = undefined
