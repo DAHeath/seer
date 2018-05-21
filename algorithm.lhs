@@ -77,6 +77,9 @@ decide whether or not this is true.
 The known fact about a label implies the query, but there are no child labels to
 progress on.
 
+Interestingly, the first two cases are reflected as possibilities in the
+original seer algorithm whereas the final two cases are the new possibilities.
+
 > data VResult
 >   = Result Record
 >   | NotHolds
