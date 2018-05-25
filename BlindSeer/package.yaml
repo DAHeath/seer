@@ -25,6 +25,7 @@ dependencies:
 - containers
 - extra
 - lens
+- formula
 
 library:
   source-dirs: src
