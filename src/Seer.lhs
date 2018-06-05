@@ -16,19 +16,13 @@ include an identifier for each node.
 > import           Formula
 > import           Formula.Z3
 
-> type Key = Var
+> import           DB
 
 As a first approximation, we just set the values in the database to be
 enumerable. We can therefore make a simplifying assumption that all values are
 integers.
 
-> type Value = Integer
-> type Record = Map Key Value
-> type Label = Expr
 > type Query = Expr
-
-> data Tree a b = Branch a (Tree a b) (Tree a b) | Leaf b
-> type DB = Tree Label Record
 
 The model of the seer algorithm we have here reveals a tree whose leaves are
 either labels (early termination) or records.
@@ -49,13 +43,6 @@ First, for each label of the database we know that the query holds or does not
 hold. We append this information.
 Second, we append information based on any records which are reached. The
 records may contain information which can inform other queries.
-
-We declare a function `formulate` which converts a record to a formula.
-
-> formulate :: Record -> Expr
-> formulate =
->   foldr mkAnd (LBool True) . map (\(k, v) ->
->     let i = LInt v in [expr|@k = $i|]) . M.toList
 
 > type VLabel = Expr
 > type VDB = Tree VLabel Record
