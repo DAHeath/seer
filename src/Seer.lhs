@@ -73,7 +73,7 @@ record information at the leaves.
 > augment' q (Branch () l1 r1) (Branch lbl' l2 r2) = do
 >   (l', Disjunctive lphi) <- listen (augment' q l1 l2)
 >   (r', Disjunctive rphi) <- listen (augment' q r1 r2)
->   pure (Branch ((lbl' `mkAnd` q) `mkOr` lphi `mkOr` rphi) l' r')
+>   pure (Branch ((lbl' `mkOr` q) `mkOr` lphi `mkOr` rphi) l' r')
 > -- Since it is assumed that the virtual database and the actual database have
 > -- the same shape, the traversal must be a subtree of the virtual database.
 > -- Under this assumption, the only possible interactions have already been
@@ -96,7 +96,7 @@ database (which we assume to be known).
 > -- Our starting assumption for the leaves is they are empty records.
 > emptyVDB (Leaf _) = Leaf M.empty
 > -- Our starting assumption for the branches is that we know nothing (true).
-> emptyVDB (Branch _ l r) = Branch (LBool True) (emptyVDB l) (emptyVDB r)
+> emptyVDB (Branch _ l r) = Branch (LBool False) (emptyVDB l) (emptyVDB r)
 
 Then, they can call augment with each new traversal they find. Finally, they
 can run a virtual version of the seer algorithm to try to answer queries.
@@ -119,17 +119,23 @@ original seer algorithm whereas the final case is the new possibility.
 >   = Result Record
 >   | NotHolds
 >   | Unknown
+>   deriving (Show, Read, Eq, Ord)
 
 The tree produced by running this virtual version of the seer algorithm
 
 > vseer :: VDB -> Query -> IO (Tree () VResult)
-> vseer (Leaf r) _ = pure $ Leaf (Result r)
-> vseer (Branch phi left right) q =
->   phi `entails` q >>= \case
->     True -> Branch () <$> vseer left q <*> vseer right q
->     False -> phi `entails` mkNot q >>= \case
+> vseer (Leaf r) q =
+>   entails (formulate r) q >>= \case
+>     True -> pure $ Leaf (Result r)
+>     False -> entails (formulate r) (mkNot q) >>= \case
 >       True -> pure $ Leaf NotHolds
 >       False -> pure $ Leaf Unknown
+> vseer (Branch phi left right) q =
+>   isSat (phi `mkAnd` q) >>= \case
+>     False -> isValid (phi `mkAnd` mkNot q) >>= \case
+>       True -> pure $ Leaf NotHolds
+>       False -> pure $ Leaf Unknown
+>     True -> Branch () <$> vseer left q <*> vseer right q
 
 Some helper definitions follow:
 

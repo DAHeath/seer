@@ -20,11 +20,10 @@ db =
     a = Var "a" Int
     b = Var "b" Int
 
-q1 :: Query
+q1, q2, q3 :: Query
 q1 = [expr|a = 1|]
-
-q2 :: Query
 q2 = [expr|b = 3|]
+q3 = [expr|a = 1 && b = 3|]
 
 mapLabels :: (a -> b) -> Tree a c -> Tree b c
 mapLabels _ (Leaf c) = Leaf c
@@ -32,6 +31,9 @@ mapLabels f (Branch lbl l r) = Branch (f lbl) (mapLabels f l) (mapLabels f r)
 
 depictDB :: DB -> String
 depictDB = depict (show . pretty) (show . pretty . M.toList)
+
+depictRes :: Tree () VResult -> String
+depictRes = depict show show
 
 depict :: (a -> String) -> (b -> String) -> Tree a b -> String
 depict sa sb = unlines . go
@@ -50,3 +52,4 @@ main = do
 
   let model = augment q2 t2 (augment q1 t1 (emptyVDB db))
   putStr $ depictDB model
+  putStr =<< depictRes <$> vseer model q3
