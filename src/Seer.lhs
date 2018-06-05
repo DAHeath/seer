@@ -5,14 +5,10 @@ The labels of the tree are, in truth, sets of (Key, Value) pairs. We also
 include an identifier for each node.
 
 > {-# LANGUAGE LambdaCase #-}
-> {-# LANGUAGE QuasiQuotes #-}
 > module Seer where
 
 > import           Control.Monad.Writer
-> import           Control.Monad.Extra
-> import           Data.Map (Map)
 > import qualified Data.Map as M
-> import           Data.Set (Set)
 > import           Formula
 > import           Formula.Z3
 
@@ -28,9 +24,12 @@ The model of the seer algorithm we have here reveals a tree whose leaves are
 either labels (early termination) or records.
 
 > seer :: DB -> Query -> IO (Tree () (Maybe Record))
-> seer (Leaf r) _ = pure $ Leaf (Just r)
+> seer (Leaf r) q = 
+>   isSat (q `mkAnd` formulate r) >>= \case
+>     True -> pure $ Leaf (Just r)
+>     False -> pure $ Leaf Nothing
 > seer (Branch lbl left right) q =
->   lbl `entails` q >>= \case
+>   isSat (q `mkAnd` lbl) >>= \case
 >     True -> Branch () <$> seer left q <*> seer right q
 >     False -> pure $ Leaf Nothing
 
