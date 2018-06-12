@@ -1,5 +1,4 @@
 {-# LANGUAGE QuasiQuotes #-}
-module Main where
 
 import           Control.Monad
 import           Data.Map                  (Map)
@@ -15,7 +14,7 @@ import           Data.Text.Prettyprint.Doc
 
 numDistinct = 100
 
-numRecords = 100000
+numRecords = 10000
 
 rdb :: IO DB
 rdb = mkDB <$> replicateM numRecords rRecord

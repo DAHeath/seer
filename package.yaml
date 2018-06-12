@@ -27,6 +27,7 @@ dependencies:
 - lens
 - formula
 - prettyprinter
+- random
 
 library:
   source-dirs: src
